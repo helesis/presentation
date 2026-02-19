@@ -103,10 +103,10 @@
     <script>
         const SUPABASE_URL = 'https://gvapdwdxikctalydaoak.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2YXBkd2R4aWtjdGFseWRhb2FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNDY0MDIsImV4cCI6MjA4NjgyMjQwMn0.35f3j7MUDBzXWKxyZp4oiX-koRWW0AlufqrC61jM7xE';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         (async function() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) window.location.href = 'dashboard.html';
         })();
 
@@ -123,7 +123,7 @@
             btn.disabled = true;
             showMsg('Giriş yapılıyor...', 'success');
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 showMsg('Yönlendiriliyorsunuz...', 'success');
                 window.location.href = 'dashboard.html';
