@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giriş - Voyage Sorgun Hotel</title>
+    <title>Giriş - Otel Gelir & Gider</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -81,23 +81,11 @@
         .msg.error { background: #fee2e2; color: #dc2626; }
         .msg.success { background: #d1fae5; color: #059669; }
         .msg.hidden { display: none; }
-        .signup-link {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #666;
-        }
-        .signup-link a {
-            color: #667eea;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .signup-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="login-box">
-        <h1>Voyage Sorgun Hotel</h1>
+        <h1>Otel Gelir & Gider</h1>
         <p class="subtitle">Gelir & Gider Dashboard</p>
         <form id="loginForm" onsubmit="return handleLogin(event)">
             <div class="form-group">
@@ -111,7 +99,6 @@
             <button type="submit" class="btn-login" id="btnLogin">Giriş Yap</button>
         </form>
         <div id="msg" class="msg hidden"></div>
-        <p class="signup-link">Hesabınız yok mu? <a href="#" onclick="showSignup(); return false;">Kayıt olun</a></p>
     </div>
     <script>
         const SUPABASE_URL = 'https://gvapdwdxikctalydaoak.supabase.co';
@@ -127,9 +114,6 @@
             const el = document.getElementById('msg');
             el.textContent = text;
             el.className = 'msg ' + type;
-        }
-        function showSignup() {
-            showMsg('Kayıt için Supabase Dashboard → Authentication → Users bölümünden kullanıcı ekleyebilirsiniz.', 'error');
         }
         async function handleLogin(e) {
             e.preventDefault();
