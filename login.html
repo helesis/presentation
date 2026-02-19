@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş - Voyage Sorgun Hotel</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-box h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1.8em;
+        }
+        .login-box .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        .btn-login:hover { opacity: 0.9; }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+        .msg {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        .msg.error { background: #fee2e2; color: #dc2626; }
+        .msg.success { background: #d1fae5; color: #059669; }
+        .msg.hidden { display: none; }
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .signup-link a {
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .signup-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>Voyage Sorgun Hotel</h1>
+        <p class="subtitle">Gelir & Gider Dashboard</p>
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+            <div class="form-group">
+                <label for="email">E-posta</label>
+                <input type="email" id="email" required placeholder="ornek@email.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-login" id="btnLogin">Giriş Yap</button>
+        </form>
+        <div id="msg" class="msg hidden"></div>
+        <p class="signup-link">Hesabınız yok mu? <a href="#" onclick="showSignup(); return false;">Kayıt olun</a></p>
+    </div>
+    <script>
+        const SUPABASE_URL = 'https://gvapdwdxikctalydaoak.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2YXBkd2R4aWtjdGFseWRhb2FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNDY0MDIsImV4cCI6MjA4NjgyMjQwMn0.35f3j7MUDBzXWKxyZp4oiX-koRWW0AlufqrC61jM7xE';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        (async function() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) window.location.href = 'index.html';
+        })();
+
+        function showMsg(text, type) {
+            const el = document.getElementById('msg');
+            el.textContent = text;
+            el.className = 'msg ' + type;
+        }
+        function showSignup() {
+            showMsg('Kayıt için Supabase Dashboard → Authentication → Users bölümünden kullanıcı ekleyebilirsiniz.', 'error');
+        }
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            showMsg('Giriş yapılıyor...', 'success');
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                showMsg('Yönlendiriliyorsunuz...', 'success');
+                window.location.href = 'index.html';
+            } catch (err) {
+                showMsg(err.message || 'Giriş başarısız.', 'error');
+                btn.disabled = false;
+            }
+            return false;
+        }
+    </script>
+</body>
+</html>
