@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gelir Dashboard - Voyage Sorgun Hotel</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <title>Giriş - Voyage Sorgun Hotel</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,1150 +11,144 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .login-box {
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
         }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
+        .login-box h1 {
             text-align: center;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1.8em;
         }
-        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
-        .header p { font-size: 1.1em; opacity: 0.9; }
-        .logout-btn {
-            padding: 10px 24px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.6);
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
+        .login-box .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
             font-size: 0.95em;
-            transition: all 0.3s;
         }
-        .logout-btn:hover { background: rgba(255,255,255,0.3); }
-        .tabs {
-            display: flex;
-            background: #f8f9fa;
-            border-bottom: 3px solid #e9ecef;
+        .form-group {
+            margin-bottom: 20px;
         }
-        .tab {
-            flex: 1;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
             font-weight: 600;
-            font-size: 1.1em;
-            transition: all 0.3s;
-            border: none;
-            background: transparent;
+            color: #374151;
         }
-        .tab:hover { background: rgba(102, 126, 234, 0.1); }
-        .tab.active {
-            background: white;
-            color: #667eea;
-            border-bottom: 3px solid #667eea;
-            margin-bottom: -3px;
-        }
-        .content { padding: 30px; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .year-selector { display: flex; gap: 10px; align-items: center; }
-        .year-btn {
-            padding: 12px 24px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            font-size: 1em;
-        }
-        .year-btn:hover { background: rgba(102, 126, 234, 0.1); }
-        .year-btn.active { background: #667eea; color: white; }
-        .year-btn.year-primary.active { background: #22c55e; color: white; border-color: #22c55e; }
-        .year-btn.year-primary:hover { background: rgba(34, 197, 94, 0.1); }
-        .year-btn.year-compare.active { background: #f59e0b; color: white; border-color: #f59e0b; }
-        .year-btn.year-compare:hover { background: rgba(245, 158, 11, 0.1); }
-        .chart-container {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .charts-grid .chart-container {
-            margin-bottom: 0;
-        }
-        .chart-legend-metrics {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px 20px;
-            padding: 8px 0 0;
-            font-size: 10px;
-            align-items: center;
-        }
-        .chart-legend-metrics .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-        .chart-legend-metrics .legend-item.hidden { opacity: 0.4; text-decoration: line-through; }
-        .chart-legend-metrics .legend-box {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-        }
-        .chart-legend-metrics .legend-change {
-            font-size: 10px;
-            font-style: italic;
-        }
-        .chart-legend-metrics .legend-change.up { color: #16a34a; }
-        .chart-legend-metrics .legend-change.down { color: #dc2626; }
-        @media (max-width: 1024px) {
-            .charts-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 600px) {
-            .charts-grid { grid-template-columns: 1fr; }
-        }
-        .table-container {
-            overflow-x: auto;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            border: 1px solid #e2e8f0;
-        }
-        #data-entry .table-container { max-width: 100%; }
-        #data-entry table {
+        .form-group input {
             width: 100%;
-            border-collapse: collapse;
-            background: white;
-            font-size: 0.9em;
-        }
-        #data-entry table th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 8px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.85em;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        #data-entry table th:first-child { text-align: left; min-width: 140px; }
-        #data-entry table td {
-            padding: 6px 8px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-            min-width: 70px;
-        }
-        #data-entry table td:first-child { text-align: left; font-weight: 600; background: #f8fafc; }
-        #data-entry table tr:hover td:not(:first-child) { background: #f1f5f9; }
-        #data-entry table input[type="number"] { padding: 6px 8px; font-size: 0.9em; text-align: right; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        td { padding: 12px 15px; border-bottom: 1px solid #e9ecef; }
-        tr:hover { background: #f8f9fa; }
-        input[type="number"] {
-            width: 100%;
-            padding: 8px 12px;
+            padding: 14px 18px;
             border: 2px solid #e9ecef;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 1em;
-            transition: all 0.3s;
-            -moz-appearance: textfield;
+            transition: border-color 0.3s;
         }
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type="number"]:focus {
+        .form-group input:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        .save-btn {
+        .btn-login {
+            width: 100%;
+            padding: 16px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px 40px;
             border: none;
-            border-radius: 25px;
+            border-radius: 12px;
             font-size: 1.1em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 20px;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: opacity 0.3s;
         }
-        .save-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 7px 20px rgba(102, 126, 234, 0.4);
-        }
-        .save-btn:active { transform: translateY(0); }
-        .status-message {
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            font-weight: 600;
-            text-align: center;
-            display: none;
-        }
-        .status-message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 2px solid #c3e6cb;
-        }
-        .status-message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 2px solid #f5c6cb;
-        }
-        .loading { text-align: center; padding: 40px; font-size: 1.2em; color: #667eea; }
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .summary-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .summary-card h3 {
+        .btn-login:hover { opacity: 0.9; }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+        .msg {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
             font-size: 0.9em;
-            opacity: 0.9;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            text-align: center;
         }
-        .summary-card .amount { font-size: 2em; font-weight: 700; }
-        .summary-card .compare-row { font-size: 0.75em; opacity: 0.9; margin-top: 6px; }
-        .summary-card .change-up { color: #22c55e; font-weight: 600; }
-        .summary-card .change-down { color: #ef4444; font-weight: 600; }
-        .summary-card .change-neutral { color: #94a3b8; font-weight: 600; }
-        .data-entry-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+        .msg.error { background: #fee2e2; color: #dc2626; }
+        .msg.success { background: #d1fae5; color: #059669; }
+        .msg.hidden { display: none; }
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
         }
-        .data-tab {
-            padding: 12px 24px;
-            border: 2px solid #667eea;
-            background: white;
+        .signup-link a {
             color: #667eea;
-            border-radius: 25px;
-            cursor: pointer;
             font-weight: 600;
-            font-size: 0.95em;
-            transition: all 0.3s;
+            text-decoration: none;
         }
-        .data-tab:hover { background: rgba(102, 126, 234, 0.1); }
-        .data-tab.active { background: #667eea; color: white; }
-        .data-table-content { display: none; }
-        .data-table-content.active { display: block; }
-        #data-entry {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-        }
-        #data-entry .data-table-content.active .table-container {
-            background: #fff;
-            border-radius: 12px;
-        }
-        .excel-paste-section { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 2px dashed #667eea; }
-        .excel-paste-section h4 { margin-bottom: 10px; color: #667eea; font-size: 1em; }
-        .excel-paste-section textarea { width: 100%; min-height: 120px; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-family: monospace; font-size: 13px; resize: vertical; }
-        .excel-paste-section .paste-hint { font-size: 0.85em; color: #666; margin: 8px 0; }
-        .excel-paste-section .paste-btn { margin-top: 10px; padding: 10px 24px; font-size: 0.95em; }
-        .year-selector-fixed {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: white;
-            padding: 15px 30px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .year-selector-fixed.hidden { display: none !important; }
-        #dashboard { padding-bottom: 90px; }
-        @media (max-width: 768px) {
-            .header h1 { font-size: 1.8em; }
-            .controls { flex-direction: column; }
-            .year-selector { flex-wrap: wrap; justify-content: center; }
-            .year-selector-fixed { padding: 12px 15px; gap: 15px; }
-            #dashboard { padding-bottom: 100px; }
-        }
+        .signup-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                <div>
-                    <h1>Gelir & Gider</h1>
-                    <p>Voyage Sorgun</p>
-                </div>
-                <button class="logout-btn" onclick="handleLogout()">Çıkış</button>
+    <div class="login-box">
+        <h1>Voyage Sorgun Hotel</h1>
+        <p class="subtitle">Gelir & Gider Dashboard</p>
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+            <div class="form-group">
+                <label for="email">E-posta</label>
+                <input type="email" id="email" required placeholder="ornek@email.com" autocomplete="email">
             </div>
-        </div>
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
-            <button class="tab" onclick="switchTab('data-entry')">Veri Girişi</button>
-        </div>
-        <div class="content">
-            <div id="dashboard" class="tab-content active">
-                <div class="controls">
-                    <h2>Yıllık Gelir Analizi</h2>
-                </div>
-                <div id="summary" class="summary-cards"></div>
-                <div class="chart-container">
-                    <canvas id="revenueChart"></canvas>
-                </div>
-                <h2 style="margin-top: 40px; margin-bottom: 20px;">Gelir Detay Analizi</h2>
-                <div class="charts-grid">
-                    <div class="chart-container"><canvas id="chartRooms"></canvas></div>
-                    <div class="chart-container"><canvas id="chartBeds"></canvas></div>
-                    <div class="chart-container"><canvas id="chartAvgRate"></canvas></div>
-                    <div class="chart-container"><canvas id="chartFoodBeverage"></canvas></div>
-                    <div class="chart-container"><canvas id="chartSpa"></canvas></div>
-                    <div class="chart-container"><canvas id="chartMarket"></canvas></div>
-                </div>
-                <h2 style="margin-top: 40px; margin-bottom: 20px;">Yıllık Gider Analizi</h2>
-                <div id="expenseSummary" class="summary-cards"></div>
-                <div class="chart-container">
-                    <canvas id="expenseChart"></canvas>
-                </div>
-                <h2 style="margin-top: 40px; margin-bottom: 20px;">Gider Detay Analizi</h2>
-                <div class="charts-grid">
-                    <div class="chart-container"><canvas id="chartExpPersonel"></canvas></div>
-                    <div class="chart-container"><canvas id="chartExpYatakPersonel"></canvas></div>
-                    <div class="chart-container"><canvas id="chartExpYiyecek"></canvas></div>
-                    <div class="chart-container"><canvas id="chartExpIcecek"></canvas></div>
-                    <div class="chart-container"><canvas id="chartExpDigerDegisken"></canvas></div>
-                    <div class="chart-container"><canvas id="chartExpUtilities"></canvas></div>
-                </div>
+            <div class="form-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
             </div>
-            <div id="data-entry" class="tab-content">
-                <h2>Veri Düzenleme</h2>
-                <p style="margin-bottom: 20px; color: #666;">Değerleri düzenleyin ve "Kaydet" butonuna basın.</p>
-                <div class="year-selector" style="margin-bottom: 20px;">
-                    <span style="font-weight: 600;">Yıl Seçin:</span>
-                    <button class="year-btn active" onclick="selectDataYear(2026)">2026</button>
-                    <button class="year-btn" onclick="selectDataYear(2025)">2025</button>
-                    <button class="year-btn" onclick="selectDataYear(2024)">2024</button>
-                    <button class="year-btn" onclick="selectDataYear(2023)">2023</button>
-                    <button class="year-btn" onclick="selectDataYear(2022)">2022</button>
-                </div>
-                <div class="data-entry-tabs">
-                    <button class="data-tab active" data-tab="revenues" onclick="selectDataTab('revenues')">Gelir</button>
-                    <button class="data-tab" data-tab="expenses" onclick="selectDataTab('expenses')">Gider</button>
-                    <button class="data-tab" data-tab="revenueMetrics" onclick="selectDataTab('revenueMetrics')">Gelir Metrikleri</button>
-                    <button class="data-tab" data-tab="expenseMetrics" onclick="selectDataTab('expenseMetrics')">Gider Metrikleri</button>
-                </div>
-                <div class="excel-paste-section">
-                    <h4>Excel'den Yapıştır</h4>
-                    <p class="paste-hint" id="pasteHint">Seçili tabloya göre Excel'den kopyalayıp yapıştırın.</p>
-                    <textarea id="excelPasteArea" placeholder="Excel'den Ctrl+C ile kopyalayıp buraya Ctrl+V ile yapıştırın..."></textarea>
-                    <button class="save-btn paste-btn" onclick="pasteFromExcel()">Veritabanına Gönder</button>
-                </div>
-                <div id="dataLoading" class="loading">Veriler yükleniyor...</div>
-                <div id="dataTableContainer"></div>
-                <button class="save-btn" id="saveDataBtn" onclick="saveData()" style="display: none;">💾 Kaydet</button>
-                <div id="statusMessage" class="status-message"></div>
-            </div>
-        </div>
-        <div id="yearSelectorFixed" class="year-selector-fixed">
-            <div class="year-selector">
-                <span style="font-weight: 600;">Yıl 1 (Ana - Bar):</span>
-                <button class="year-btn year-primary active" data-year="2026" onclick="selectPrimaryYear(2026)">2026</button>
-                <button class="year-btn year-primary" data-year="2025" onclick="selectPrimaryYear(2025)">2025</button>
-                <button class="year-btn year-primary" data-year="2024" onclick="selectPrimaryYear(2024)">2024</button>
-                <button class="year-btn year-primary" data-year="2023" onclick="selectPrimaryYear(2023)">2023</button>
-                <button class="year-btn year-primary" data-year="2022" onclick="selectPrimaryYear(2022)">2022</button>
-            </div>
-            <div class="year-selector">
-                <span style="font-weight: 600;">Yıl 2 (Karşılaştır - Çizgi):</span>
-                <button class="year-btn year-compare" data-year="2026" onclick="selectCompareYear(2026)">2026</button>
-                <button class="year-btn year-compare active" data-year="2025" onclick="selectCompareYear(2025)">2025</button>
-                <button class="year-btn year-compare" data-year="2024" onclick="selectCompareYear(2024)">2024</button>
-                <button class="year-btn year-compare" data-year="2023" onclick="selectCompareYear(2023)">2023</button>
-                <button class="year-btn year-compare" data-year="2022" onclick="selectCompareYear(2022)">2022</button>
-            </div>
-        </div>
+            <button type="submit" class="btn-login" id="btnLogin">Giriş Yap</button>
+        </form>
+        <div id="msg" class="msg hidden"></div>
+        <p class="signup-link">Hesabınız yok mu? <a href="#" onclick="showSignup(); return false;">Kayıt olun</a></p>
     </div>
     <script>
-        const formatBarLabel = (v) => {
-            if (!v && v !== 0) return '';
-            if (v >= 1e6) { const m = v/1e6; return (m % 1 === 0 ? m : m.toFixed(1)) + 'M'; }
-            if (v >= 1e3) { const k = v/1e3; return (k % 1 === 0 ? k : k.toFixed(1)) + 'K'; }
-            if (v > 0 && v < 1) return v.toFixed(2);
-            return Math.round(v).toString();
-        };
-        const datalabelsBarOnly = {
-            display: (ctx) => ctx.dataset.type === 'bar',
-            formatter: (v) => formatBarLabel(v),
-            anchor: 'end',
-            align: 'top',
-            font: { size: 10 },
-            color: '#374151'
-        };
-        const legendWithTotal = {
-            display: true,
-            position: 'top',
-            onClick: function(e, legendItem, legend) {
-                const idx = legendItem.datasetIndex;
-                const meta = legend.chart.getDatasetMeta(idx);
-                meta.hidden = !meta.hidden;
-                legend.chart.update();
-            },
-            labels: {
-                font: { size: 10 },
-                generateLabels: function(chart) {
-                    const datasets = chart.data.datasets;
-                    return datasets.map((ds, i) => {
-                        const total = ds.data && Array.isArray(ds.data) ? ds.data.reduce((a, b) => a + (Number(b) || 0), 0) : null;
-                        const labelText = ds.label + (total !== null ? ' — ' + formatBarLabel(total) : '');
-                        const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : (ds.backgroundColor || ds.borderColor || '#666');
-                        const border = Array.isArray(ds.borderColor) ? ds.borderColor[0] : (ds.borderColor || '#666');
-                        return { text: labelText, fillStyle: bg, strokeStyle: border, lineWidth: 1, datasetIndex: i, hidden: chart.getDatasetMeta(i).hidden };
-                    });
-                }
-            }
-        };
-        const legendNoTotal = {
-            ...legendWithTotal,
-            labels: {
-                ...legendWithTotal.labels,
-                generateLabels: function(chart) {
-                    const datasets = chart.data.datasets;
-                    return datasets.map((ds, i) => {
-                        const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : (ds.backgroundColor || ds.borderColor || '#666');
-                        const border = Array.isArray(ds.borderColor) ? ds.borderColor[0] : (ds.borderColor || '#666');
-                        return { text: ds.label, fillStyle: bg, strokeStyle: border, lineWidth: 1, datasetIndex: i, hidden: chart.getDatasetMeta(i).hidden };
-                    });
-                }
-            }
-        };
-        const METRICS_WITH_CHANGE = ['chartRooms','chartBeds','chartFoodBeverage','chartSpa','chartMarket','chartExpPersonel','chartExpYiyecek','chartExpIcecek','chartExpDigerDegisken','chartExpUtilities'];
-        const legendMetricsHidden = { ...legendWithTotal, display: false };
-        const metricsLegendPlugin = {
-            id: 'metricsLegendPlugin',
-            afterRender(chart) {
-                const canvasId = chart.canvas?.id;
-                if (!canvasId || !METRICS_WITH_CHANGE.includes(canvasId)) return;
-                const compareTotals = chart.options?.metricsCompareTotals;
-                const container = chart.canvas.closest('.chart-container');
-                if (!container) return;
-                let legendEl = container.querySelector('.chart-legend-metrics');
-                if (!legendEl) { legendEl = document.createElement('div'); legendEl.className = 'chart-legend-metrics'; container.appendChild(legendEl); }
-                const datasets = chart.data.datasets;
-                let html = '';
-                datasets.forEach((ds, i) => {
-                    const total = ds.data && Array.isArray(ds.data) ? ds.data.reduce((a, b) => a + (Number(b) || 0), 0) : null;
-                    const meta = chart.getDatasetMeta(i);
-                    const hidden = meta.hidden;
-                    const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : (ds.backgroundColor || ds.borderColor || '#666');
-                    let changeHtml = '';
-                    if (ds.type === 'bar' && compareTotals && compareTotals[i] !== undefined) {
-                        const ct = compareTotals[i];
-                        const pct = ct !== 0 ? ((total - ct) / ct * 100) : (total !== 0 ? 100 : 0);
-                        const isUp = pct >= 0;
-                        const arrow = isUp ? '↑' : '↓';
-                        const sign = pct >= 0 ? '+' : '';
-                        changeHtml = '<span class="legend-change ' + (isUp ? 'up' : 'down') + '">(' + sign + pct.toFixed(1) + '% ' + arrow + ')</span>';
-                    }
-                    const totalStr = total !== null ? ' — ' + formatBarLabel(total) : '';
-                    html += '<div class="legend-item' + (hidden ? ' hidden' : '') + '" data-idx="' + i + '"><span class="legend-box" style="background:' + bg + '"></span><span>' + ds.label + totalStr + '</span>' + changeHtml + '</div>';
-                });
-                legendEl.innerHTML = html;
-                legendEl.querySelectorAll('.legend-item').forEach(el => {
-                    el.onclick = () => { const idx = parseInt(el.dataset.idx); const m = chart.getDatasetMeta(idx); m.hidden = !m.hidden; chart.update(); };
-                });
-            }
-        };
-        if (typeof Chart !== 'undefined') Chart.register(metricsLegendPlugin);
         const SUPABASE_URL = 'https://gvapdwdxikctalydaoak.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2YXBkd2R4aWtjdGFseWRhb2FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNDY0MDIsImV4cCI6MjA4NjgyMjQwMn0.35f3j7MUDBzXWKxyZp4oiX-koRWW0AlufqrC61jM7xE';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let currentYear = 2026, compareYear = 2025, currentDataYear = 2026, currentDataTab = 'revenues', chart = null, expenseChart = null, allData = [], allExpenseData = [], allMetricsData = [], allExpenseMetricsData = [], editedData = { revenues: {}, expenses: {}, revenueMetrics: {}, expenseMetrics: {} };
-        let metricsCharts = { rooms: null, beds: null, avgRate: null, foodBeverage: null, spa: null, market: null };
-        let expenseMetricsCharts = { personel: null, yatakPersonel: null, yiyecek: null, icecek: null, digerDegisken: null, utilities: null };
-        const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-        const revenueTypes = {
-            accommodation_revenue: { label: 'Konaklama Geliri', color: '#667eea' },
-            extra_revenues: { label: 'Ekstra Gelirler', color: '#764ba2' },
-            service_allocation_revenues: { label: 'Hizmet Tahsis Gelirleri', color: '#f093fb' }
-        };
-        const expenseTypes = {
-            personel_giderleri: { label: 'Personel Giderleri', color: '#667eea' },
-            degisken_maliyetler: { label: 'Değişken Maliyetler', color: '#764ba2' },
-            sabit_giderler: { label: 'Sabit Giderler', color: '#f093fb' },
-            startup: { label: 'Start Up', color: '#6366f1' },
-            bakim_onarim: { label: 'Bakım Onarım', color: '#8b5cf6' },
-            merkez_giderleri: { label: 'Merkez Giderleri', color: '#a78bfa' },
-            satis_giderleri: { label: 'Satış', color: '#ec4899' },
-            insan_kaynaklari_giderleri: { label: 'İnsan Kaynakları', color: '#14b8a6' }
-        };
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(tabName).classList.add('active');
-            const fixedBar = document.getElementById('yearSelectorFixed');
-            if (fixedBar) fixedBar.classList.toggle('hidden', tabName !== 'dashboard');
-            if (tabName === 'dashboard') loadDashboard();
-            else if (tabName === 'data-entry') loadDataEntry();
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        (async function() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) window.location.href = 'dashboard.html';
+        })();
+
+        function showMsg(text, type) {
+            const el = document.getElementById('msg');
+            el.textContent = text;
+            el.className = 'msg ' + type;
         }
-        function selectPrimaryYear(year) {
-            currentYear = year;
-            document.querySelectorAll('.year-primary').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.year) === year);
-            });
-            updateChart();
-            updateSummary();
-            updateExpenseChart();
-            updateExpenseSummary();
-            updateMetricsCharts();
-            updateExpenseMetricsCharts();
+        function showSignup() {
+            showMsg('Kayıt için Supabase Dashboard → Authentication → Users bölümünden kullanıcı ekleyebilirsiniz.', 'error');
         }
-        function selectCompareYear(year) {
-            compareYear = year;
-            document.querySelectorAll('.year-compare').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.year) === year);
-            });
-            updateChart();
-            updateSummary();
-            updateExpenseChart();
-            updateExpenseSummary();
-            updateMetricsCharts();
-            updateExpenseMetricsCharts();
-        }
-        function selectDataYear(year) {
-            currentDataYear = year;
-            document.querySelectorAll('#data-entry .year-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (parseInt(btn.textContent) === year) btn.classList.add('active');
-            });
-            renderDataTables();
-        }
-        function selectDataTab(tab) {
-            currentDataTab = tab;
-            document.querySelectorAll('.data-tab').forEach(btn => { btn.classList.toggle('active', btn.dataset.tab === tab); });
-            document.querySelectorAll('.data-table-content').forEach(el => el.classList.remove('active'));
-            const ids = { revenues: 'tableRevenues', expenses: 'tableExpenses', revenueMetrics: 'tableRevenueMetrics', expenseMetrics: 'tableExpenseMetrics' };
-            const el = document.getElementById(ids[tab]);
-            if (el) el.classList.add('active');
-            const hint = document.getElementById('pasteHint');
-            if (hint && PASTE_HINTS) hint.textContent = PASTE_HINTS[tab] || hint.textContent;
-        }
-        async function loadAllData() {
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            showMsg('Giriş yapılıyor...', 'success');
             try {
-                const { data, error } = await supabaseClient.from('monthly_revenues').select('*').order('year', { ascending: true }).order('month', { ascending: true });
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                allData = data || [];
-                return allData;
-            } catch (error) {
-                console.error('Veri yükleme hatası:', error);
-                showStatus('Veriler yüklenirken hata oluştu!', 'error');
-                return [];
+                showMsg('Yönlendiriliyorsunuz...', 'success');
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                showMsg(err.message || 'Giriş başarısız.', 'error');
+                btn.disabled = false;
             }
+            return false;
         }
-        async function loadAllExpenses() {
-            try {
-                const { data, error } = await supabaseClient.from('monthly_expenses').select('*').order('year', { ascending: true }).order('month', { ascending: true });
-                if (error) throw error;
-                allExpenseData = data || [];
-                return allExpenseData;
-            } catch (error) {
-                console.error('Gider verisi yükleme hatası:', error);
-                allExpenseData = [];
-                return [];
-            }
-        }
-        async function loadAllMetrics() {
-            try {
-                const { data, error } = await supabaseClient.from('monthly_revenue_metrics').select('*').order('year', { ascending: true }).order('month', { ascending: true });
-                if (error) throw error;
-                allMetricsData = data || [];
-                return allMetricsData;
-            } catch (error) {
-                console.error('Metrik verisi yükleme hatası:', error);
-                allMetricsData = [];
-                return [];
-            }
-        }
-        async function loadAllExpenseMetrics() {
-            try {
-                const { data, error } = await supabaseClient.from('monthly_expense_metrics').select('*').order('year', { ascending: true }).order('month', { ascending: true });
-                if (error) throw error;
-                allExpenseMetricsData = data || [];
-                return allExpenseMetricsData;
-            } catch (error) {
-                console.error('Gider metrik verisi yükleme hatası:', error);
-                allExpenseMetricsData = [];
-                return [];
-            }
-        }
-        async function loadDashboard() {
-            await Promise.all([loadAllData(), loadAllExpenses(), loadAllMetrics(), loadAllExpenseMetrics()]);
-            createChart();
-            createExpenseChart();
-            createMetricsCharts();
-            createExpenseMetricsCharts();
-            updateChart();
-            updateSummary();
-            updateExpenseChart();
-            updateExpenseSummary();
-            updateMetricsCharts();
-            updateExpenseMetricsCharts();
-        }
-        function createChart() {
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            if (chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: monthNames, datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 2,
-                    plugins: {
-                        datalabels: datalabelsBarOnly,
-                        title: { display: true, text: 'Aylık Gelir Dağılımı (€)', font: { size: 18, weight: 'bold' } },
-                        legend: { ...legendWithTotal, labels: { ...legendWithTotal.labels, font: { size: 14 }, padding: 20, usePointStyle: true } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    label += new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 12 } } },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-                                },
-                                font: { size: 12 }
-                            },
-                            grid: { color: '#e9ecef' }
-                        }
-                    }
-                }
-            });
-        }
-        function updateChart() {
-            if (!chart) return;
-            const datasets = [];
-            const year1Data = allData.filter(d => d.year === currentYear);
-            Object.keys(revenueTypes).forEach(key => {
-                const config = revenueTypes[key];
-                const data = new Array(12).fill(0);
-                year1Data.forEach(r => { data[r.month - 1] = parseFloat(r[key]) || 0; });
-                datasets.push({ label: currentYear + ' ' + config.label, data, backgroundColor: config.color, borderColor: config.color, borderWidth: 1, type: 'bar', order: 2 });
-            });
-            if (compareYear !== currentYear) {
-                const year2Data = allData.filter(d => d.year === compareYear);
-                const totalData = new Array(12).fill(0);
-                year2Data.forEach(r => {
-                    totalData[r.month - 1] = (parseFloat(r.accommodation_revenue) || 0) + (parseFloat(r.extra_revenues) || 0) + (parseFloat(r.service_allocation_revenues) || 0);
-                });
-                datasets.push({ label: compareYear + ' Toplam', data: totalData, borderColor: '#f59e0b', type: 'line', fill: false, tension: 0.3, pointRadius: 5, order: 1 });
-            }
-            chart.data.datasets = datasets;
-            chart.options.plugins.title.text = compareYear !== currentYear ? (currentYear + ' vs ' + compareYear + ' Gelir Karşılaştırması (€)') : (currentYear + ' Yılı Aylık Gelir Dağılımı (€)');
-            chart.update();
-        }
-        function updateSummary() {
-            const yearData = allData.filter(d => d.year === currentYear);
-            const compareData = compareYear !== currentYear ? allData.filter(d => d.year === compareYear) : [];
-            const totals = { accommodation_revenue: 0, extra_revenues: 0, service_allocation_revenues: 0, total: 0 };
-            const compareTotals = { accommodation_revenue: 0, extra_revenues: 0, service_allocation_revenues: 0, total: 0 };
-            yearData.forEach(row => {
-                totals.accommodation_revenue += parseFloat(row.accommodation_revenue) || 0;
-                totals.extra_revenues += parseFloat(row.extra_revenues) || 0;
-                totals.service_allocation_revenues += parseFloat(row.service_allocation_revenues) || 0;
-            });
-            totals.total = totals.accommodation_revenue + totals.extra_revenues + totals.service_allocation_revenues;
-            compareData.forEach(row => {
-                compareTotals.accommodation_revenue += parseFloat(row.accommodation_revenue) || 0;
-                compareTotals.extra_revenues += parseFloat(row.extra_revenues) || 0;
-                compareTotals.service_allocation_revenues += parseFloat(row.service_allocation_revenues) || 0;
-            });
-            compareTotals.total = compareTotals.accommodation_revenue + compareTotals.extra_revenues + compareTotals.service_allocation_revenues;
-            const card = (label, curr, prev) => {
-                let changeHtml = '';
-                if (compareYear !== currentYear && prev !== undefined) {
-                    const pct = prev !== 0 ? ((curr - prev) / prev * 100) : (curr !== 0 ? 100 : 0);
-                    const isUp = curr > prev;
-                    const cls = curr === prev ? 'change-neutral' : (isUp ? 'change-up' : 'change-down');
-                    const arrow = isUp ? '↑' : (curr < prev ? '↓' : '→');
-                    changeHtml = '<div class="compare-row">' + compareYear + ': ' + formatCurrency(prev) + '</div><div class="' + cls + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '% ' + arrow + '</div>';
-                }
-                return '<div class="summary-card"><h3>' + label + '</h3><div class="amount">' + formatCurrency(curr) + '</div>' + changeHtml + '</div>';
-            };
-            document.getElementById('summary').innerHTML = 
-                card('Toplam Gelir', totals.total, compareTotals.total) +
-                card('Konaklama', totals.accommodation_revenue, compareTotals.accommodation_revenue) +
-                card('Ekstra Gelirler', totals.extra_revenues, compareTotals.extra_revenues) +
-                card('Hizmet Tahsis', totals.service_allocation_revenues, compareTotals.service_allocation_revenues);
-        }
-        function getMetricsYearData(year) { return allMetricsData.filter(d => d.year === (year || currentYear)); }
-        function createMetricsCharts() {
-            const commonOpts = { responsive: true, maintainAspectRatio: true, aspectRatio: 1.5, plugins: { datalabels: datalabelsBarOnly, legend: legendWithTotal, tooltip: {} }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } }, y: { beginAtZero: true, grid: { color: '#e9ecef' }, ticks: { font: { size: 10 } } } } };
-            const barOpts = (title, yCallback) => ({ ...commonOpts, plugins: { ...commonOpts.plugins, title: { display: true, text: title, font: { size: 14, weight: 'bold' } } }, scales: { ...commonOpts.scales, y: { ...commonOpts.scales.y, ticks: { ...commonOpts.scales.y.ticks, callback: yCallback } } } });
-            ['rooms','beds','avgRate','foodBeverage','spa','market'].forEach(k => { if (metricsCharts[k]) { metricsCharts[k].destroy(); metricsCharts[k] = null; } });
-            metricsCharts.rooms = new Chart(document.getElementById('chartRooms').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Ücretli Satılan Oda (Adet)', v => v) });
-            metricsCharts.beds = new Chart(document.getElementById('chartBeds').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Satılan Yatak (Adet)', v => v) });
-            metricsCharts.avgRate = new Chart(document.getElementById('chartAvgRate').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Average Rate (€)', v => v ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'EUR',minimumFractionDigits:0}).format(v) : v) });
-            const currCb = v => v ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'EUR',minimumFractionDigits:0}).format(v) : v;
-            metricsCharts.foodBeverage = new Chart(document.getElementById('chartFoodBeverage').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: { ...barOpts('Yiyecek & İçecek Gelirleri', currCb), scales: { x: { ...commonOpts.scales.x, stacked: true }, y: { ...commonOpts.scales.y, stacked: true, ticks: { ...commonOpts.scales.y.ticks, callback: currCb } } }, plugins: { ...commonOpts.plugins, legend: legendWithTotal } } });
-            metricsCharts.spa = new Chart(document.getElementById('chartSpa').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Spa Gelirleri (€)', v => v ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'EUR',minimumFractionDigits:0}).format(v) : v) });
-            metricsCharts.market = new Chart(document.getElementById('chartMarket').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Market Gelirleri (€)', v => v ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'EUR',minimumFractionDigits:0}).format(v) : v) });
-        }
-        function updateMetricsCharts() {
-            const y1 = getMetricsYearData(currentYear);
-            const y2 = getMetricsYearData(compareYear);
-            const getData = (yearData, field) => { const d = new Array(12).fill(0); yearData.forEach(r => { d[r.month - 1] = parseFloat(r[field]) || parseInt(r[field]) || 0; }); return d; };
-            const addLine = (ds, field) => { if (compareYear !== currentYear) ds.push({ label: compareYear, data: getData(y2, field), borderColor: '#f59e0b', type: 'line', fill: false, tension: 0.3, pointRadius: 4, order: 1 }); };
-            if (metricsCharts.rooms) { const ds = [{ label: currentYear + ' Oda', data: getData(y1, 'paid_rooms_sold'), backgroundColor: '#667eea', borderColor: '#667eea', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'paid_rooms_sold'); metricsCharts.rooms.data.datasets = ds; metricsCharts.rooms.options.plugins.legend = legendMetricsHidden; metricsCharts.rooms.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2, 'paid_rooms_sold').reduce((a,b)=>a+(Number(b)||0),0)] : null; metricsCharts.rooms.update(); }
-            if (metricsCharts.beds) { const ds = [{ label: currentYear + ' Yatak', data: getData(y1, 'beds_sold'), backgroundColor: '#764ba2', borderColor: '#764ba2', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'beds_sold'); metricsCharts.beds.data.datasets = ds; metricsCharts.beds.options.plugins.legend = legendMetricsHidden; metricsCharts.beds.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2, 'beds_sold').reduce((a,b)=>a+(Number(b)||0),0)] : null; metricsCharts.beds.update(); }
-            if (metricsCharts.avgRate) { const ds = [{ label: currentYear + ' Avg Rate', data: getData(y1, 'average_rate'), backgroundColor: '#f093fb', borderColor: '#f093fb', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'average_rate'); metricsCharts.avgRate.data.datasets = ds; metricsCharts.avgRate.options.plugins.legend = legendNoTotal; metricsCharts.avgRate.update(); }
-            if (metricsCharts.foodBeverage) { const ds = [{ label: currentYear + ' Yiyecek', data: getData(y1, 'food_revenue'), backgroundColor: '#667eea', borderColor: '#667eea', borderWidth: 1, type: 'bar', order: 2 }, { label: currentYear + ' İçecek', data: getData(y1, 'beverage_revenue'), backgroundColor: '#764ba2', borderColor: '#764ba2', borderWidth: 1, type: 'bar', order: 2 }]; if (compareYear !== currentYear) { const tot = new Array(12).fill(0); y2.forEach(r => { tot[r.month - 1] = (parseFloat(r.food_revenue) || 0) + (parseFloat(r.beverage_revenue) || 0); }); ds.push({ label: compareYear + ' Toplam', data: tot, borderColor: '#f59e0b', type: 'line', fill: false, tension: 0.3, pointRadius: 4, order: 1 }); } metricsCharts.foodBeverage.data.datasets = ds; metricsCharts.foodBeverage.options.scales.x.stacked = true; metricsCharts.foodBeverage.options.scales.y.stacked = true; metricsCharts.foodBeverage.options.plugins.legend = legendMetricsHidden; metricsCharts.foodBeverage.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2,'food_revenue').reduce((a,b)=>a+(Number(b)||0),0), getData(y2,'beverage_revenue').reduce((a,b)=>a+(Number(b)||0),0)] : null; metricsCharts.foodBeverage.update(); }
-            if (metricsCharts.spa) { const ds = [{ label: currentYear + ' Spa', data: getData(y1, 'spa_revenue'), backgroundColor: '#8b5cf6', borderColor: '#8b5cf6', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'spa_revenue'); metricsCharts.spa.data.datasets = ds; metricsCharts.spa.options.plugins.legend = legendMetricsHidden; metricsCharts.spa.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2, 'spa_revenue').reduce((a,b)=>a+(Number(b)||0),0)] : null; metricsCharts.spa.update(); }
-            if (metricsCharts.market) { const ds = [{ label: currentYear + ' Market', data: getData(y1, 'market_revenue'), backgroundColor: '#a78bfa', borderColor: '#a78bfa', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'market_revenue'); metricsCharts.market.data.datasets = ds; metricsCharts.market.options.plugins.legend = legendMetricsHidden; metricsCharts.market.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2, 'market_revenue').reduce((a,b)=>a+(Number(b)||0),0)] : null; metricsCharts.market.update(); }
-        }
-        function createExpenseChart() {
-            const ctx = document.getElementById('expenseChart').getContext('2d');
-            if (expenseChart) expenseChart.destroy();
-            expenseChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: monthNames, datasets: [] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 2,
-                    plugins: {
-                        datalabels: datalabelsBarOnly,
-                        title: { display: true, text: 'Aylık Gider Dağılımı (€)', font: { size: 18, weight: 'bold' } },
-                        legend: { ...legendWithTotal, labels: { ...legendWithTotal.labels, font: { size: 14 }, padding: 20, usePointStyle: true } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    label += new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 12 } } },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-                                },
-                                font: { size: 12 }
-                            },
-                            grid: { color: '#e9ecef' }
-                        }
-                    }
-                }
-            });
-        }
-        function updateExpenseChart() {
-            if (!expenseChart) return;
-            const datasets = [];
-            const year1Data = allExpenseData.filter(d => d.year === currentYear);
-            Object.keys(expenseTypes).forEach(key => {
-                const config = expenseTypes[key];
-                const data = new Array(12).fill(0);
-                year1Data.forEach(r => { data[r.month - 1] = parseFloat(r[key]) || 0; });
-                datasets.push({ label: currentYear + ' ' + config.label, data, backgroundColor: config.color, borderColor: config.color, borderWidth: 1, type: 'bar', order: 2 });
-            });
-            if (compareYear !== currentYear) {
-                const year2Data = allExpenseData.filter(d => d.year === compareYear);
-                const totalData = new Array(12).fill(0);
-                year2Data.forEach(r => {
-                    totalData[r.month - 1] = Object.keys(expenseTypes).reduce((sum, k) => sum + (parseFloat(r[k]) || 0), 0);
-                });
-                datasets.push({ label: compareYear + ' Toplam', data: totalData, borderColor: '#f59e0b', type: 'line', fill: false, tension: 0.3, pointRadius: 5, order: 1 });
-            }
-            expenseChart.data.datasets = datasets;
-            expenseChart.options.plugins.title.text = compareYear !== currentYear ? (currentYear + ' vs ' + compareYear + ' Gider Karşılaştırması (€)') : (currentYear + ' Yılı Aylık Gider Dağılımı (€)');
-            expenseChart.update();
-        }
-        function updateExpenseSummary() {
-            const yearData = allExpenseData.filter(d => d.year === currentYear);
-            const compareData = compareYear !== currentYear ? allExpenseData.filter(d => d.year === compareYear) : [];
-            const totals = {};
-            const compareTotals = {};
-            Object.keys(expenseTypes).forEach(k => { totals[k] = 0; compareTotals[k] = 0; });
-            totals.total = 0; compareTotals.total = 0;
-            yearData.forEach(row => {
-                Object.keys(expenseTypes).forEach(k => {
-                    totals[k] += parseFloat(row[k]) || 0;
-                });
-            });
-            compareData.forEach(row => {
-                Object.keys(expenseTypes).forEach(k => {
-                    compareTotals[k] += parseFloat(row[k]) || 0;
-                });
-            });
-            totals.total = Object.keys(expenseTypes).reduce((s, k) => s + totals[k], 0);
-            compareTotals.total = Object.keys(expenseTypes).reduce((s, k) => s + compareTotals[k], 0);
-            const card = (label, curr, prev, isExpense) => {
-                let changeHtml = '';
-                if (compareYear !== currentYear && prev !== undefined) {
-                    const pct = prev !== 0 ? ((curr - prev) / prev * 100) : (curr !== 0 ? 100 : 0);
-                    const isUp = curr > prev;
-                    const cls = curr === prev ? 'change-neutral' : (isExpense ? (isUp ? 'change-down' : 'change-up') : (isUp ? 'change-up' : 'change-down'));
-                    const arrow = isUp ? '↑' : (curr < prev ? '↓' : '→');
-                    changeHtml = '<div class="compare-row">' + compareYear + ': ' + formatCurrency(prev) + '</div><div class="' + cls + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '% ' + arrow + '</div>';
-                }
-                return '<div class="summary-card"><h3>' + label + '</h3><div class="amount">' + formatCurrency(curr) + '</div>' + changeHtml + '</div>';
-            };
-            document.getElementById('expenseSummary').innerHTML = 
-                card('Toplam Gider', totals.total, compareTotals.total, true) +
-                Object.keys(expenseTypes).map(k => card(expenseTypes[k].label, totals[k], compareTotals[k], true)).join('');
-        }
-        function getExpenseMetricsYearData(year) { return allExpenseMetricsData.filter(d => d.year === (year || currentYear)); }
-        function createExpenseMetricsCharts() {
-            const commonOpts = { responsive: true, maintainAspectRatio: true, aspectRatio: 1.5, plugins: { datalabels: datalabelsBarOnly, legend: legendWithTotal, tooltip: {} }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } }, y: { beginAtZero: true, grid: { color: '#e9ecef' }, ticks: { font: { size: 10 } } } } };
-            const barOpts = (title, yCallback) => ({ ...commonOpts, plugins: { ...commonOpts.plugins, title: { display: true, text: title, font: { size: 14, weight: 'bold' } } }, scales: { ...commonOpts.scales, y: { ...commonOpts.scales.y, ticks: { ...commonOpts.scales.y.ticks, callback: yCallback } } } });
-            const currCb = v => v ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'EUR',minimumFractionDigits:0}).format(v) : v;
-            Object.keys(expenseMetricsCharts).forEach(k => { if (expenseMetricsCharts[k]) { expenseMetricsCharts[k].destroy(); expenseMetricsCharts[k] = null; } });
-            expenseMetricsCharts.personel = new Chart(document.getElementById('chartExpPersonel').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Personel Sayısı', v => v) });
-            expenseMetricsCharts.yatakPersonel = new Chart(document.getElementById('chartExpYatakPersonel').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Yatak/Personel Oranı', v => v ? v.toFixed(1) : v) });
-            expenseMetricsCharts.yiyecek = new Chart(document.getElementById('chartExpYiyecek').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Yiyecek Maliyeti (€)', currCb) });
-            expenseMetricsCharts.icecek = new Chart(document.getElementById('chartExpIcecek').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('İçecek Maliyeti (€)', currCb) });
-            expenseMetricsCharts.digerDegisken = new Chart(document.getElementById('chartExpDigerDegisken').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: barOpts('Diğer Değişken Giderler (€)', currCb) });
-            expenseMetricsCharts.utilities = new Chart(document.getElementById('chartExpUtilities').getContext('2d'), { type: 'bar', data: { labels: monthNames, datasets: [] }, options: { ...barOpts('Elektrik + LNG + Su + Atık Su (€)', currCb), scales: { x: { ...commonOpts.scales.x, stacked: true }, y: { ...commonOpts.scales.y, stacked: true, ticks: { ...commonOpts.scales.y.ticks, callback: currCb } } }, plugins: { ...commonOpts.plugins, legend: legendWithTotal } } });
-        }
-        function updateExpenseMetricsCharts() {
-            const y1 = getExpenseMetricsYearData(currentYear);
-            const y2 = getExpenseMetricsYearData(compareYear);
-            const revY1 = getMetricsYearData(currentYear);
-            const revY2 = getMetricsYearData(compareYear);
-            const getData = (yearData, field) => { const d = new Array(12).fill(0); yearData.forEach(r => { d[r.month - 1] = parseFloat(r[field]) || parseInt(r[field]) || 0; }); return d; };
-            const getYatakPersonelOrani = (revData, expData, year) => {
-                const d = new Array(12).fill(0);
-                for (let m = 1; m <= 12; m++) {
-                    const beds = (revData.find(r => r.month === m)?.beds_sold) || 0;
-                    const personel = (expData.find(r => r.month === m)?.personel_sayisi_otel) || 0;
-                    const days = new Date(year, m, 0).getDate();
-                    const denom = personel * days;
-                    d[m - 1] = denom > 0 ? (parseFloat(beds) || parseInt(beds) || 0) / denom : 0;
-                }
-                return d;
-            };
-            const addLine = (ds, field) => { if (compareYear !== currentYear) ds.push({ label: compareYear, data: getData(y2, field), borderColor: '#f59e0b', type: 'line', fill: false, tension: 0.3, pointRadius: 4, order: 1 }); };
-            const addLineTotal = (ds, fields) => { if (compareYear !== currentYear) { const tot = new Array(12).fill(0); y2.forEach(r => { fields.forEach(f => { tot[r.month - 1] += parseFloat(r[f]) || parseInt(r[f]) || 0; }); }); ds.push({ label: compareYear + ' Toplam', data: tot, borderColor: '#f59e0b', type: 'line', fill: false, tension: 0.3, pointRadius: 4, order: 1 }); } };
-            if (expenseMetricsCharts.personel) { const ds = [{ label: currentYear + ' Personel Sayısı', data: getData(y1, 'personel_sayisi_otel'), backgroundColor: '#667eea', borderColor: '#667eea', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'personel_sayisi_otel'); expenseMetricsCharts.personel.data.datasets = ds; expenseMetricsCharts.personel.options.scales.x.stacked = false; expenseMetricsCharts.personel.options.scales.y.stacked = false; expenseMetricsCharts.personel.options.plugins.legend = legendMetricsHidden; expenseMetricsCharts.personel.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2, 'personel_sayisi_otel').reduce((a,b)=>a+(Number(b)||0),0)] : null; expenseMetricsCharts.personel.update(); }
-            if (expenseMetricsCharts.yatakPersonel) { const ds = [{ label: currentYear + ' Oran', data: getYatakPersonelOrani(revY1, y1, currentYear), backgroundColor: '#8b5cf6', borderColor: '#8b5cf6', borderWidth: 1, type: 'bar', order: 2 }]; if (compareYear !== currentYear) ds.push({ label: compareYear, data: getYatakPersonelOrani(revY2, y2, compareYear), borderColor: '#f59e0b', type: 'line', fill: false, tension: 0.3, pointRadius: 4, order: 1 }); expenseMetricsCharts.yatakPersonel.data.datasets = ds; expenseMetricsCharts.yatakPersonel.options.plugins.legend = legendNoTotal; expenseMetricsCharts.yatakPersonel.update(); }
-            if (expenseMetricsCharts.yiyecek) { const ds = [{ label: currentYear + ' Yiyecek', data: getData(y1, 'yiyecek_maliyeti'), backgroundColor: '#6366f1', borderColor: '#6366f1', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'yiyecek_maliyeti'); expenseMetricsCharts.yiyecek.data.datasets = ds; expenseMetricsCharts.yiyecek.options.plugins.legend = legendMetricsHidden; expenseMetricsCharts.yiyecek.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2, 'yiyecek_maliyeti').reduce((a,b)=>a+(Number(b)||0),0)] : null; expenseMetricsCharts.yiyecek.update(); }
-            if (expenseMetricsCharts.icecek) { const ds = [{ label: currentYear + ' İçecek', data: getData(y1, 'icecek_maliyeti'), backgroundColor: '#a78bfa', borderColor: '#a78bfa', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'icecek_maliyeti'); expenseMetricsCharts.icecek.data.datasets = ds; expenseMetricsCharts.icecek.options.plugins.legend = legendMetricsHidden; expenseMetricsCharts.icecek.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2, 'icecek_maliyeti').reduce((a,b)=>a+(Number(b)||0),0)] : null; expenseMetricsCharts.icecek.update(); }
-            if (expenseMetricsCharts.digerDegisken) { const ds = [{ label: currentYear + ' Diğer', data: getData(y1, 'diger_degisken_giderler'), backgroundColor: '#c084fc', borderColor: '#c084fc', borderWidth: 1, type: 'bar', order: 2 }]; addLine(ds, 'diger_degisken_giderler'); expenseMetricsCharts.digerDegisken.data.datasets = ds; expenseMetricsCharts.digerDegisken.options.plugins.legend = legendMetricsHidden; expenseMetricsCharts.digerDegisken.options.metricsCompareTotals = compareYear !== currentYear ? [getData(y2, 'diger_degisken_giderler').reduce((a,b)=>a+(Number(b)||0),0)] : null; expenseMetricsCharts.digerDegisken.update(); }
-            if (expenseMetricsCharts.utilities) { const ds = [{ label: currentYear + ' Elektrik', data: getData(y1, 'elektrik_gideri'), backgroundColor: '#667eea', borderColor: '#667eea', borderWidth: 1, type: 'bar', order: 2 }, { label: currentYear + ' LNG', data: getData(y1, 'lng_gideri'), backgroundColor: '#764ba2', borderColor: '#764ba2', borderWidth: 1, type: 'bar', order: 2 }, { label: currentYear + ' Su', data: getData(y1, 'su_gideri'), backgroundColor: '#f093fb', borderColor: '#f093fb', borderWidth: 1, type: 'bar', order: 2 }, { label: currentYear + ' Atık Su', data: getData(y1, 'atik_su_gideri'), backgroundColor: '#8b5cf6', borderColor: '#8b5cf6', borderWidth: 1, type: 'bar', order: 2 }]; addLineTotal(ds, ['elektrik_gideri', 'lng_gideri', 'su_gideri', 'atik_su_gideri']); expenseMetricsCharts.utilities.data.datasets = ds; expenseMetricsCharts.utilities.options.scales.x.stacked = true; expenseMetricsCharts.utilities.options.scales.y.stacked = true; expenseMetricsCharts.utilities.options.plugins.legend = legendMetricsHidden; expenseMetricsCharts.utilities.options.metricsCompareTotals = compareYear !== currentYear ? ['elektrik_gideri','lng_gideri','su_gideri','atik_su_gideri'].map(f=>getData(y2,f).reduce((a,b)=>a+(Number(b)||0),0)) : null; expenseMetricsCharts.utilities.update(); }
-        }
-        async function loadDataEntry() {
-            document.getElementById('dataLoading').style.display = 'block';
-            document.getElementById('dataTableContainer').innerHTML = '';
-            document.getElementById('saveDataBtn').style.display = 'none';
-            await Promise.all([loadAllData(), loadAllExpenses(), loadAllMetrics(), loadAllExpenseMetrics()]);
-            renderDataTables();
-            document.getElementById('dataLoading').style.display = 'none';
-            document.getElementById('saveDataBtn').style.display = 'block';
-        }
-        function inp(tbl, id, month, field, val, step, updateTotal) {
-            const rowId = (id && id !== 'undefined') ? id : '';
-            const onCh = updateTotal ? 'markEdited(this); updateRowTotal(this)' : 'markEdited(this)';
-            return '<input type="number" step="' + (step || '0.01') + '" value="' + (val ?? 0) + '" data-table="' + tbl + '" data-id="' + rowId + '" data-month="' + month + '" data-field="' + field + '" onchange="' + onCh + '">';
-        }
-        function updateRowTotal(input) {
-            const row = input.closest('tr');
-            if (!row) return;
-            const cells = row.querySelectorAll('td input[type="number"]');
-            let sum = 0;
-            cells.forEach(inp => { sum += parseFloat(inp.value) || 0; });
-            const totalCell = row.querySelector('td:last-child');
-            if (totalCell) totalCell.innerHTML = '<strong>' + formatCurrency(sum) + '</strong>';
-        }
-        function renderDataTables() {
-            editedData = { revenues: {}, expenses: {}, revenueMetrics: {}, expenseMetrics: {} };
-            const revData = allData.filter(d => d.year === currentDataYear);
-            const expData = allExpenseData.filter(d => d.year === currentDataYear);
-            const revMetData = allMetricsData.filter(d => d.year === currentDataYear);
-            const expMetData = allExpenseMetricsData.filter(d => d.year === currentDataYear);
-            let html = '';
-            const REV_CRITERIA = [{ field: 'accommodation_revenue', label: 'Konaklama (€)' }, { field: 'extra_revenues', label: 'Ekstra (€)' }, { field: 'service_allocation_revenues', label: 'Hizmet Tahsis (€)' }];
-            const EXP_CRITERIA = [{ field: 'personel_giderleri', label: 'Personel (€)' }, { field: 'degisken_maliyetler', label: 'Değişken (€)' }, { field: 'sabit_giderler', label: 'Sabit (€)' }, { field: 'startup', label: 'Start Up (€)' }, { field: 'bakim_onarim', label: 'Bakım (€)' }, { field: 'merkez_giderleri', label: 'Merkez (€)' }, { field: 'satis_giderleri', label: 'Satış (€)' }, { field: 'insan_kaynaklari_giderleri', label: 'İnsan Kaynakları (€)' }];
-            html += '<div id="tableRevenues" class="data-table-content active"><div class="table-container"><table><thead><tr><th>Kriter</th>' + monthNames.map(m => '<th>' + m + '</th>').join('') + '<th>Toplam</th></tr></thead><tbody>';
-            for (const cr of REV_CRITERIA) {
-                let rowTotal = 0;
-                let cells = '';
-                for (let m = 1; m <= 12; m++) {
-                    const r = revData.find(d => d.month === m);
-                    const v = r ? parseFloat(r[cr.field]) : 0;
-                    rowTotal += v;
-                    cells += '<td>' + inp('revenues', r?.id, m, cr.field, v, '0.01', true) + '</td>';
-                }
-                html += '<tr><td><strong>' + cr.label + '</strong></td>' + cells + '<td><strong>' + formatCurrency(rowTotal) + '</strong></td></tr>';
-            }
-            html += '</tbody></table></div></div>';
-            html += '<div id="tableExpenses" class="data-table-content"><div class="table-container"><table><thead><tr><th>Kriter</th>' + monthNames.map(m => '<th>' + m + '</th>').join('') + '<th>Toplam</th></tr></thead><tbody>';
-            for (const cr of EXP_CRITERIA) {
-                let rowTotal = 0;
-                let cells = '';
-                for (let m = 1; m <= 12; m++) {
-                    const r = expData.find(d => d.month === m);
-                    const v = r ? parseFloat(r[cr.field]) : 0;
-                    rowTotal += v;
-                    cells += '<td>' + inp('expenses', r?.id, m, cr.field, v, '0.01', true) + '</td>';
-                }
-                html += '<tr><td><strong>' + cr.label + '</strong></td>' + cells + '<td><strong>' + formatCurrency(rowTotal) + '</strong></td></tr>';
-            }
-            html += '</tbody></table></div></div>';
-            html += '<div id="tableRevenueMetrics" class="data-table-content"><div class="table-container"><table><thead><tr><th>Ay</th><th>Oda</th><th>Yatak</th><th>Avg Rate (€)</th><th>Yiyecek (€)</th><th>İçecek (€)</th><th>Spa (€)</th><th>Market (€)</th></tr></thead><tbody>';
-            for (let m = 1; m <= 12; m++) {
-                const r = revMetData.find(d => d.month === m);
-                html += '<tr><td><strong>' + monthNames[m - 1] + '</strong></td><td>' + inp('revenueMetrics', r?.id, m, 'paid_rooms_sold', r?.paid_rooms_sold, '1') + '</td><td>' + inp('revenueMetrics', r?.id, m, 'beds_sold', r?.beds_sold, '1') + '</td><td>' + inp('revenueMetrics', r?.id, m, 'average_rate', r?.average_rate) + '</td><td>' + inp('revenueMetrics', r?.id, m, 'food_revenue', r?.food_revenue) + '</td><td>' + inp('revenueMetrics', r?.id, m, 'beverage_revenue', r?.beverage_revenue) + '</td><td>' + inp('revenueMetrics', r?.id, m, 'spa_revenue', r?.spa_revenue) + '</td><td>' + inp('revenueMetrics', r?.id, m, 'market_revenue', r?.market_revenue) + '</td></tr>';
-            }
-            html += '</tbody></table></div></div>';
-            html += '<div id="tableExpenseMetrics" class="data-table-content"><div class="table-container"><table><thead><tr><th>Ay</th><th>Personel Sayısı</th><th>Yiyecek (€)</th><th>İçecek (€)</th><th>Diğer Değ. (€)</th><th>Elektrik (€)</th><th>LNG (€)</th><th>Su (€)</th><th>Atık Su (€)</th></tr></thead><tbody>';
-            for (let m = 1; m <= 12; m++) {
-                const r = expMetData.find(d => d.month === m);
-                html += '<tr><td><strong>' + monthNames[m - 1] + '</strong></td><td>' + inp('expenseMetrics', r?.id, m, 'personel_sayisi_otel', r?.personel_sayisi_otel, '1') + '</td><td>' + inp('expenseMetrics', r?.id, m, 'yiyecek_maliyeti', r?.yiyecek_maliyeti) + '</td><td>' + inp('expenseMetrics', r?.id, m, 'icecek_maliyeti', r?.icecek_maliyeti) + '</td><td>' + inp('expenseMetrics', r?.id, m, 'diger_degisken_giderler', r?.diger_degisken_giderler) + '</td><td>' + inp('expenseMetrics', r?.id, m, 'elektrik_gideri', r?.elektrik_gideri) + '</td><td>' + inp('expenseMetrics', r?.id, m, 'lng_gideri', r?.lng_gideri) + '</td><td>' + inp('expenseMetrics', r?.id, m, 'su_gideri', r?.su_gideri) + '</td><td>' + inp('expenseMetrics', r?.id, m, 'atik_su_gideri', r?.atik_su_gideri) + '</td></tr>';
-            }
-            html += '</tbody></table></div></div>';
-            document.getElementById('dataTableContainer').innerHTML = html;
-            selectDataTab(currentDataTab);
-        }
-        function markEdited(input) {
-            const table = input.dataset.table;
-            const id = input.dataset.id;
-            const month = parseInt(input.dataset.month);
-            const field = input.dataset.field;
-            const step = input.getAttribute('step');
-            const value = step === '1' ? (parseInt(input.value) || 0) : (parseFloat(input.value) || 0);
-            const key = (id && id !== 'undefined' && id !== 'null') ? id : 'new-' + month;
-            if (!editedData[table]) editedData[table] = {};
-            if (!editedData[table][key]) editedData[table][key] = { id: id || null, month, fields: {} };
-            editedData[table][key].fields[field] = value;
-            input.style.borderColor = '#ffc107';
-            input.style.background = '#fff3cd';
-        }
-        const TABLE_NAMES = { revenues: 'monthly_revenues', expenses: 'monthly_expenses', revenueMetrics: 'monthly_revenue_metrics', expenseMetrics: 'monthly_expense_metrics' };
-        const TABLE_COLS = {
-            revenues: ['accommodation_revenue', 'extra_revenues', 'service_allocation_revenues'],
-            expenses: ['personel_giderleri', 'degisken_maliyetler', 'sabit_giderler', 'startup', 'bakim_onarim', 'merkez_giderleri', 'satis_giderleri', 'insan_kaynaklari_giderleri'],
-            revenueMetrics: ['paid_rooms_sold', 'beds_sold', 'average_rate', 'food_revenue', 'beverage_revenue', 'spa_revenue', 'market_revenue'],
-            expenseMetrics: ['personel_sayisi_otel', 'yiyecek_maliyeti', 'icecek_maliyeti', 'diger_degisken_giderler', 'elektrik_gideri', 'lng_gideri', 'su_gideri', 'atik_su_gideri']
-        };
-        async function saveData() {
-            const hasEdits = Object.values(editedData).some(t => Object.keys(t).length > 0);
-            if (!hasEdits) { showStatus('Değişiklik yapılmadı!', 'error'); return; }
-            try {
-                for (const table of Object.keys(editedData)) {
-                    const rows = editedData[table];
-                    if (Object.keys(rows).length === 0) continue;
-                    const tableName = TABLE_NAMES[table];
-                    const cols = TABLE_COLS[table];
-                    for (const key in rows) {
-                        const { id, month, fields } = rows[key];
-                        const isNew = key.startsWith('new-') || !id;
-                        let payload;
-                        if (isNew) {
-                            payload = { year: currentDataYear, month: parseInt(month) };
-                            cols.forEach(c => { payload[c] = fields[c] ?? 0; });
-                        } else {
-                            payload = { ...fields, updated_at: new Date().toISOString() };
-                        }
-                        if (isNew) {
-                            const { error } = await supabaseClient.from(tableName).upsert(payload, { onConflict: 'year,month' });
-                            if (error) throw error;
-                        } else {
-                            const { error } = await supabaseClient.from(tableName).update(payload).eq('id', id);
-                            if (error) throw error;
-                        }
-                    }
-                }
-                showStatus('✅ Veriler başarıyla kaydedildi!', 'success');
-                await loadDataEntry();
-                document.querySelectorAll('#data-entry input[type="number"]').forEach(input => {
-                    input.style.borderColor = '#e9ecef';
-                    input.style.background = 'white';
-                });
-            } catch (error) {
-                console.error('Kaydetme hatası:', error);
-                showStatus('❌ Kaydetme sırasında hata oluştu!', 'error');
-            }
-        }
-        const PASTE_COLS = {
-            revenues: ['accommodation_revenue', 'extra_revenues', 'service_allocation_revenues'],
-            expenses: ['personel_giderleri', 'degisken_maliyetler', 'sabit_giderler', 'startup', 'bakim_onarim', 'merkez_giderleri', 'satis_giderleri', 'insan_kaynaklari_giderleri'],
-            revenueMetrics: ['paid_rooms_sold', 'beds_sold', 'average_rate', 'food_revenue', 'beverage_revenue', 'spa_revenue', 'market_revenue'],
-            expenseMetrics: ['personel_sayisi_otel', 'yiyecek_maliyeti', 'icecek_maliyeti', 'diger_degisken_giderler', 'elektrik_gideri', 'lng_gideri', 'su_gideri', 'atik_su_gideri']
-        };
-        const PASTE_HINTS = {
-            revenues: 'Gelir: İlk sütun kriter (Konaklama, Ekstra, Hizmet Tahsis), 2-13. sütunlar Ocak-Aralık değerleri.',
-            expenses: 'Gider: İlk sütun kriter (Personel, Değişken, Sabit, Start Up, Bakım, Merkez, Satış, İnsan Kaynakları), 2-13. sütunlar Ocak-Aralık değerleri.',
-            revenueMetrics: 'Gelir Metrikleri: İlk sütun metrik adı (Oda, Yatak, Avg Rate, Yiyecek, İçecek, Spa, Market), 2-13. sütunlar Ocak-Aralık değerleri.',
-            expenseMetrics: 'Gider Metrikleri: İlk sütun metrik adı (Personel Sayısı, Yiyecek, İçecek, Diğer Değ., Elektrik, LNG, Su, Atık Su), 2-13. sütunlar Ocak-Aralık değerleri. Yatak/Personel oranı otomatik hesaplanır.'
-        };
-        function parseMonth(val) {
-            const v = String(val).trim();
-            const n = parseInt(v);
-            if (n >= 1 && n <= 12) return n;
-            const idx = monthNames.findIndex(m => m.toLowerCase() === v.toLowerCase());
-            return idx >= 0 ? idx + 1 : null;
-        }
-        function isMetricsTable(t) { return t === 'revenueMetrics' || t === 'expenseMetrics'; }
-        async function pasteFromExcel() {
-            const text = document.getElementById('excelPasteArea').value.trim();
-            if (!text) { showStatus('Lütfen Excel\'den veri yapıştırın!', 'error'); return; }
-            const table = currentDataTab;
-            const cols = PASTE_COLS[table];
-            const tableName = TABLE_NAMES[table];
-            const rows = text.split(/\r?\n/).map(r => r.split(/\t/).map(c => c.trim()));
-            const dataRows = rows.filter(r => r.length > 1);
-            if (dataRows.length === 0) { showStatus('Geçerli veri bulunamadı!', 'error'); return; }
-            let toUpsert = [];
-            if (isMetricsTable(table)) {
-                const isHeaderRow = (r) => monthNames.some(m => r[1] === m || r[0] === 'Metrik' || r[0] === 'Metrik Adı');
-                const startIdx = isHeaderRow(dataRows[0]) ? 1 : 0;
-                const monthData = {};
-                for (let m = 1; m <= 12; m++) { monthData[m] = { year: currentDataYear, month: m }; cols.forEach(c => { monthData[m][c] = 0; }); }
-                for (let i = startIdx; i < dataRows.length && i - startIdx < cols.length; i++) {
-                    const row = dataRows[i];
-                    const colIdx = i - startIdx;
-                    const dbCol = cols[colIdx];
-                    for (let m = 1; m <= 12; m++) {
-                        const val = row[m];
-                        monthData[m][dbCol] = parseFloat(val) || parseInt(val) || 0;
-                    }
-                }
-                toUpsert = Object.values(monthData);
-            } else {
-                const REV_MAP = { 'konaklama': 'accommodation_revenue', 'ekstra': 'extra_revenues', 'hizmet tahsis': 'service_allocation_revenues', 'accommodation_revenue': 'accommodation_revenue', 'extra_revenues': 'extra_revenues', 'service_allocation_revenues': 'service_allocation_revenues' };
-                const EXP_MAP = { 'personel': 'personel_giderleri', 'degisken': 'degisken_maliyetler', 'değişken': 'degisken_maliyetler', 'sabit': 'sabit_giderler', 'bakim': 'bakim_onarim', 'bakım': 'bakim_onarim', 'startup': 'startup', 'start up': 'startup', 'merkez': 'merkez_giderleri', 'satış': 'satis_giderleri', 'satis': 'satis_giderleri', 'insan kaynakları': 'insan_kaynaklari_giderleri', 'insan kaynaklari': 'insan_kaynaklari_giderleri', 'personel_giderleri': 'personel_giderleri', 'degisken_maliyetler': 'degisken_maliyetler', 'sabit_giderler': 'sabit_giderler', 'bakim_onarim': 'bakim_onarim', 'merkez_giderleri': 'merkez_giderleri', 'satis_giderleri': 'satis_giderleri', 'insan_kaynaklari_giderleri': 'insan_kaynaklari_giderleri' };
-                const fieldMap = table === 'revenues' ? REV_MAP : EXP_MAP;
-                const isHeaderRow = (r) => monthNames.some(m => (r[1] === m || r[0] === 'Kriter' || r[0] === 'Metrik'));
-                const startIdx = isHeaderRow(dataRows[0]) ? 1 : 0;
-                const monthData = {};
-                for (let m = 1; m <= 12; m++) { monthData[m] = { year: currentDataYear, month: m }; cols.forEach(c => { monthData[m][c] = 0; }); }
-                for (let i = startIdx; i < dataRows.length && i - startIdx < cols.length; i++) {
-                    const row = dataRows[i];
-                    const key = String(row[0] || '').toLowerCase().trim().replace(/\(€\)/g, '').trim();
-                    let field = null;
-                    for (const k in fieldMap) { if (key.includes(k) || key === k) { field = fieldMap[k]; break; } }
-                    if (!field || !cols.includes(field)) continue;
-                    for (let m = 1; m <= 12; m++) {
-                        const val = row[m];
-                        monthData[m][field] = parseFloat(val) || parseInt(val) || 0;
-                    }
-                }
-                toUpsert = Object.values(monthData);
-            }
-            if (toUpsert.length === 0) { showStatus('Ayrıştırılan veri yok!', 'error'); return; }
-            try {
-                const { error } = await supabaseClient.from(tableName).upsert(toUpsert, { onConflict: 'year,month' });
-                if (error) throw error;
-                showStatus('✅ ' + toUpsert.length + ' satır veritabanına gönderildi!', 'success');
-                document.getElementById('excelPasteArea').value = '';
-                await loadDataEntry();
-            } catch (e) {
-                console.error('Veritabanı gönderim hatası:', e);
-                let msg = 'Veri gönderilemedi';
-                if (e && typeof e === 'object') {
-                    const parts = [];
-                    if (e.message) parts.push(e.message);
-                    if (e.details) parts.push('Detay: ' + e.details);
-                    if (e.hint) parts.push('İpucu: ' + e.hint);
-                    if (e.code) parts.push('Kod: ' + e.code);
-                    msg = parts.length > 0 ? parts.join(' | ') : JSON.stringify(e);
-                } else if (typeof e === 'string') {
-                    msg = e;
-                }
-                showStatus('❌ Hata: ' + msg, 'error');
-            }
-        }
-        function showStatus(message, type) {
-            const statusEl = document.getElementById('statusMessage');
-            statusEl.textContent = message;
-            statusEl.className = 'status-message ' + type;
-            statusEl.style.display = 'block';
-            setTimeout(() => statusEl.style.display = 'none', 3000);
-        }
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-        }
-        async function checkAuthAndLoad() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { window.location.href = 'login.html'; return; }
-            loadDashboard();
-        }
-        async function handleLogout() {
-            await supabaseClient.auth.signOut();
-            window.location.href = 'login.html';
-        }
-        window.addEventListener('load', () => checkAuthAndLoad());
     </script>
 </body>
 </html>
